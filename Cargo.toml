@@ -1,0 +1,16 @@
+[package]
+name = "git-dash"
+version = "0.1.0"
+edition = "2021"
+description = "Multi-repo git dashboard TUI"
+
+[dependencies]
+ratatui = "0.29"
+crossterm = "0.28"
+rayon = "1.10"
+clap = { version = "4", features = ["derive"] }
+chrono = "0.4"
+
+[profile.release]
+opt-level = 2
+lto = "thin"
