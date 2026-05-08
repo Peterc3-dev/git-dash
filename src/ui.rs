@@ -9,14 +9,14 @@ use ratatui::{
 use crate::app::{App, DetailTab, SortMode, View};
 
 // Phosphor-green palette
-const GREEN_BRIGHT: Color = Color::Rgb(0, 255, 136);
-const GREEN_DIM: Color = Color::Rgb(0, 180, 90);
-const GREEN_DARK: Color = Color::Rgb(0, 100, 50);
+const GREEN_BRIGHT: Color = Color::Rgb(0, 255, 200);
+const GREEN_DIM: Color = Color::Rgb(0, 128, 100);
+const GREEN_DARK: Color = Color::Rgb(0, 50, 40);
 const CYAN: Color = Color::Rgb(0, 220, 255);
 const YELLOW: Color = Color::Rgb(255, 220, 0);
 const RED: Color = Color::Rgb(255, 80, 80);
 const BG: Color = Color::Rgb(10, 10, 10);
-const FG: Color = Color::Rgb(0, 230, 120);
+const FG: Color = Color::Rgb(0, 200, 156);
 
 pub fn draw(f: &mut Frame, app: &App) {
     let size = f.area();
