@@ -127,16 +127,14 @@ fn main() -> io::Result<()> {
                         KeyCode::Down | KeyCode::Char('j') => app.select_next(),
                         KeyCode::Up | KeyCode::Char('k') => app.select_prev(),
                         KeyCode::Enter => app.enter_detail(),
-                        KeyCode::Char('f') => {
-                            if !app.fetching {
-                                app.fetching = true;
-                                let paths = app.repo_paths.clone();
-                                let tx_fetch = tx.clone();
-                                thread::spawn(move || {
-                                    git::fetch_all_repos(&paths);
-                                    let _ = tx_fetch.send(BgMessage::FetchComplete);
-                                });
-                            }
+                        KeyCode::Char('f') if !app.fetching => {
+                            app.fetching = true;
+                            let paths = app.repo_paths.clone();
+                            let tx_fetch = tx.clone();
+                            thread::spawn(move || {
+                                git::fetch_all_repos(&paths);
+                                let _ = tx_fetch.send(BgMessage::FetchComplete);
+                            });
                         }
                         KeyCode::Char('r') => app.refresh(),
                         KeyCode::Char('/') => app.start_filter(),

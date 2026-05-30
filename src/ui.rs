@@ -20,10 +20,7 @@ const FG: Color = Color::Rgb(0, 200, 156);
 
 pub fn draw(f: &mut Frame, app: &App) {
     let size = f.area();
-    f.render_widget(
-        Block::default().style(Style::default().bg(BG)),
-        size,
-    );
+    f.render_widget(Block::default().style(Style::default().bg(BG)), size);
 
     match &app.view {
         View::RepoList => draw_repo_list(f, app, size),
@@ -41,7 +38,7 @@ fn draw_repo_list(f: &mut Frame, app: &App, area: Rect) {
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Length(3), // summary bar
-            Constraint::Min(5),   // repo table
+            Constraint::Min(5),    // repo table
             Constraint::Length(3), // help bar
         ])
         .split(area);
@@ -54,7 +51,10 @@ fn draw_repo_list(f: &mut Frame, app: &App, area: Rect) {
 fn draw_summary_bar(f: &mut Frame, app: &App, area: Rect) {
     let repos = &app.filtered_repos();
     let total = repos.len();
-    let clean = repos.iter().filter(|r| r.dirty_count == 0 && r.behind == 0 && r.ahead == 0).count();
+    let clean = repos
+        .iter()
+        .filter(|r| r.dirty_count == 0 && r.behind == 0 && r.ahead == 0)
+        .count();
     let dirty = repos.iter().filter(|r| r.dirty_count > 0).count();
     let behind = repos.iter().filter(|r| r.behind > 0).count();
     let total_changes: u32 = repos.iter().map(|r| r.dirty_count).sum();
@@ -67,7 +67,12 @@ fn draw_summary_bar(f: &mut Frame, app: &App, area: Rect) {
 
     let line = Line::from(vec![
         Span::styled("  REPOS: ", Style::default().fg(GREEN_DIM)),
-        Span::styled(format!("{}", total), Style::default().fg(GREEN_BRIGHT).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            format!("{}", total),
+            Style::default()
+                .fg(GREEN_BRIGHT)
+                .add_modifier(Modifier::BOLD),
+        ),
         Span::styled("  |  CLEAN: ", Style::default().fg(GREEN_DIM)),
         Span::styled(format!("{}", clean), Style::default().fg(GREEN_BRIGHT)),
         Span::styled("  |  DIRTY: ", Style::default().fg(GREEN_DIM)),
@@ -83,9 +88,16 @@ fn draw_summary_bar(f: &mut Frame, app: &App, area: Rect) {
         Span::styled("  |  UNCOMMITTED: ", Style::default().fg(GREEN_DIM)),
         Span::styled(
             format!("{}", total_changes),
-            Style::default().fg(if total_changes > 0 { YELLOW } else { GREEN_BRIGHT }),
+            Style::default().fg(if total_changes > 0 {
+                YELLOW
+            } else {
+                GREEN_BRIGHT
+            }),
         ),
-        Span::styled(format!("  |  sort: {}", sort_label), Style::default().fg(GREEN_DARK)),
+        Span::styled(
+            format!("  |  sort: {}", sort_label),
+            Style::default().fg(GREEN_DARK),
+        ),
     ]);
 
     let block = Block::default()
@@ -93,7 +105,9 @@ fn draw_summary_bar(f: &mut Frame, app: &App, area: Rect) {
         .border_style(Style::default().fg(GREEN_DARK))
         .title(Span::styled(
             " git-dash ",
-            Style::default().fg(GREEN_BRIGHT).add_modifier(Modifier::BOLD),
+            Style::default()
+                .fg(GREEN_BRIGHT)
+                .add_modifier(Modifier::BOLD),
         ))
         .style(Style::default().bg(BG));
 
@@ -108,7 +122,8 @@ fn draw_repo_table(f: &mut Frame, app: &App, area: Rect) {
         Cell::from("Branch").style(Style::default().fg(GREEN_DIM).add_modifier(Modifier::BOLD)),
         Cell::from("↑/↓").style(Style::default().fg(GREEN_DIM).add_modifier(Modifier::BOLD)),
         Cell::from("Dirty").style(Style::default().fg(GREEN_DIM).add_modifier(Modifier::BOLD)),
-        Cell::from("Last Commit").style(Style::default().fg(GREEN_DIM).add_modifier(Modifier::BOLD)),
+        Cell::from("Last Commit")
+            .style(Style::default().fg(GREEN_DIM).add_modifier(Modifier::BOLD)),
         Cell::from("Message").style(Style::default().fg(GREEN_DIM).add_modifier(Modifier::BOLD)),
     ])
     .height(1)
@@ -137,7 +152,9 @@ fn draw_repo_table(f: &mut Frame, app: &App, area: Rect) {
                     .bg(row_color)
                     .add_modifier(Modifier::BOLD)
             } else {
-                Style::default().fg(GREEN_BRIGHT).add_modifier(Modifier::BOLD)
+                Style::default()
+                    .fg(GREEN_BRIGHT)
+                    .add_modifier(Modifier::BOLD)
             };
 
             let base_style = if is_selected {
@@ -216,28 +233,62 @@ fn draw_help_bar(f: &mut Frame, app: &App, area: Rect) {
         String::new()
     };
 
-    let fetching_text = if app.fetching {
-        "  [FETCHING...]"
-    } else {
-        ""
-    };
+    let fetching_text = if app.fetching { "  [FETCHING...]" } else { "" };
 
     let line = Line::from(vec![
-        Span::styled("  q", Style::default().fg(GREEN_BRIGHT).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            "  q",
+            Style::default()
+                .fg(GREEN_BRIGHT)
+                .add_modifier(Modifier::BOLD),
+        ),
         Span::styled(" quit  ", Style::default().fg(GREEN_DIM)),
-        Span::styled("↑↓/jk", Style::default().fg(GREEN_BRIGHT).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            "↑↓/jk",
+            Style::default()
+                .fg(GREEN_BRIGHT)
+                .add_modifier(Modifier::BOLD),
+        ),
         Span::styled(" navigate  ", Style::default().fg(GREEN_DIM)),
-        Span::styled("Enter", Style::default().fg(GREEN_BRIGHT).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            "Enter",
+            Style::default()
+                .fg(GREEN_BRIGHT)
+                .add_modifier(Modifier::BOLD),
+        ),
         Span::styled(" detail  ", Style::default().fg(GREEN_DIM)),
-        Span::styled("f", Style::default().fg(GREEN_BRIGHT).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            "f",
+            Style::default()
+                .fg(GREEN_BRIGHT)
+                .add_modifier(Modifier::BOLD),
+        ),
         Span::styled(" fetch  ", Style::default().fg(GREEN_DIM)),
-        Span::styled("r", Style::default().fg(GREEN_BRIGHT).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            "r",
+            Style::default()
+                .fg(GREEN_BRIGHT)
+                .add_modifier(Modifier::BOLD),
+        ),
         Span::styled(" refresh  ", Style::default().fg(GREEN_DIM)),
-        Span::styled("/", Style::default().fg(GREEN_BRIGHT).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            "/",
+            Style::default()
+                .fg(GREEN_BRIGHT)
+                .add_modifier(Modifier::BOLD),
+        ),
         Span::styled(" filter  ", Style::default().fg(GREEN_DIM)),
-        Span::styled("s", Style::default().fg(GREEN_BRIGHT).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            "s",
+            Style::default()
+                .fg(GREEN_BRIGHT)
+                .add_modifier(Modifier::BOLD),
+        ),
         Span::styled(" sort  ", Style::default().fg(GREEN_DIM)),
-        Span::styled(fetching_text, Style::default().fg(CYAN).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            fetching_text,
+            Style::default().fg(CYAN).add_modifier(Modifier::BOLD),
+        ),
         Span::styled(filter_text, Style::default().fg(YELLOW)),
     ]);
 
@@ -269,7 +320,9 @@ fn draw_filter_overlay(f: &mut Frame, app: &App, area: Rect) {
             .border_style(Style::default().fg(GREEN_BRIGHT))
             .title(Span::styled(
                 " Filter repos ",
-                Style::default().fg(GREEN_BRIGHT).add_modifier(Modifier::BOLD),
+                Style::default()
+                    .fg(GREEN_BRIGHT)
+                    .add_modifier(Modifier::BOLD),
             ))
             .style(Style::default().bg(BG)),
     );
@@ -294,7 +347,7 @@ fn draw_repo_detail(f: &mut Frame, app: &App, area: Rect) {
         .constraints([
             Constraint::Length(3), // header
             Constraint::Length(2), // tabs
-            Constraint::Min(5),   // content
+            Constraint::Min(5),    // content
             Constraint::Length(3), // help
         ])
         .split(area);
@@ -302,9 +355,17 @@ fn draw_repo_detail(f: &mut Frame, app: &App, area: Rect) {
     // Header
     let header_line = Line::from(vec![
         Span::styled("  ", Style::default()),
-        Span::styled(&repo.name, Style::default().fg(GREEN_BRIGHT).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            &repo.name,
+            Style::default()
+                .fg(GREEN_BRIGHT)
+                .add_modifier(Modifier::BOLD),
+        ),
         Span::styled("  on  ", Style::default().fg(GREEN_DIM)),
-        Span::styled(&repo.branch, Style::default().fg(CYAN).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            &repo.branch,
+            Style::default().fg(CYAN).add_modifier(Modifier::BOLD),
+        ),
         Span::styled(
             format!("  ({})", repo.path.display()),
             Style::default().fg(GREEN_DARK),
@@ -358,11 +419,26 @@ fn draw_repo_detail(f: &mut Frame, app: &App, area: Rect) {
 
     // Help
     let help_line = Line::from(vec![
-        Span::styled("  Esc/Backspace", Style::default().fg(GREEN_BRIGHT).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            "  Esc/Backspace",
+            Style::default()
+                .fg(GREEN_BRIGHT)
+                .add_modifier(Modifier::BOLD),
+        ),
         Span::styled(" back  ", Style::default().fg(GREEN_DIM)),
-        Span::styled("Tab/1-4", Style::default().fg(GREEN_BRIGHT).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            "Tab/1-4",
+            Style::default()
+                .fg(GREEN_BRIGHT)
+                .add_modifier(Modifier::BOLD),
+        ),
         Span::styled(" switch tab  ", Style::default().fg(GREEN_DIM)),
-        Span::styled("↑↓/jk", Style::default().fg(GREEN_BRIGHT).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            "↑↓/jk",
+            Style::default()
+                .fg(GREEN_BRIGHT)
+                .add_modifier(Modifier::BOLD),
+        ),
         Span::styled(" scroll", Style::default().fg(GREEN_DIM)),
     ]);
     let help = Paragraph::new(help_line).block(
@@ -421,15 +497,13 @@ fn draw_commits(f: &mut Frame, detail: &crate::git::RepoDetail, app: &App, area:
     ];
 
     let title = format!(" Commits ({}) ", detail.commits.len());
-    let table = Table::new(rows, widths)
-        .header(header)
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .border_style(Style::default().fg(GREEN_DARK))
-                .style(Style::default().bg(BG))
-                .title(Span::styled(title, Style::default().fg(GREEN_BRIGHT))),
-        );
+    let table = Table::new(rows, widths).header(header).block(
+        Block::default()
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(GREEN_DARK))
+            .style(Style::default().bg(BG))
+            .title(Span::styled(title, Style::default().fg(GREEN_BRIGHT))),
+    );
 
     f.render_widget(table, area);
 }
@@ -466,16 +540,15 @@ fn draw_changes(f: &mut Frame, detail: &crate::git::RepoDetail, app: &App, area:
                             format!("  {:>2} ", fs.status),
                             Style::default().fg(Color::Black).bg(status_color),
                         ),
-                        Span::styled(
-                            &fs.path,
-                            Style::default().fg(Color::Black).bg(status_color),
-                        ),
+                        Span::styled(&fs.path, Style::default().fg(Color::Black).bg(status_color)),
                     ])
                 } else {
                     Line::from(vec![
                         Span::styled(
                             format!("  {:>2} ", fs.status),
-                            Style::default().fg(status_color).add_modifier(Modifier::BOLD),
+                            Style::default()
+                                .fg(status_color)
+                                .add_modifier(Modifier::BOLD),
                         ),
                         Span::styled(&fs.path, Style::default().fg(FG)),
                     ])
@@ -521,10 +594,7 @@ fn draw_branches(f: &mut Frame, detail: &crate::git::RepoDetail, app: &App, area
                         format!("  {}{}", marker, b.name),
                         Style::default().fg(Color::Black).bg(CYAN),
                     ),
-                    Span::styled(
-                        tracking_info,
-                        Style::default().fg(Color::Black).bg(CYAN),
-                    ),
+                    Span::styled(tracking_info, Style::default().fg(Color::Black).bg(CYAN)),
                 ])
             } else {
                 let name_color = if b.is_current { GREEN_BRIGHT } else { CYAN };
