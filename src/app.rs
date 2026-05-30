@@ -76,15 +76,11 @@ impl App {
         };
 
         match self.sort_mode {
-            SortMode::Name => repos.sort_by(|a, b| {
-                a.name.to_lowercase().cmp(&b.name.to_lowercase())
-            }),
-            SortMode::LastCommit => repos.sort_by(|a, b| {
-                b.last_commit_timestamp.cmp(&a.last_commit_timestamp)
-            }),
-            SortMode::DirtyCount => repos.sort_by(|a, b| {
-                b.dirty_count.cmp(&a.dirty_count)
-            }),
+            SortMode::Name => repos.sort_by_key(|r| r.name.to_lowercase()),
+            SortMode::LastCommit => {
+                repos.sort_by_key(|r| std::cmp::Reverse(r.last_commit_timestamp))
+            }
+            SortMode::DirtyCount => repos.sort_by_key(|r| std::cmp::Reverse(r.dirty_count)),
         }
 
         repos
@@ -204,5 +200,161 @@ impl App {
         } else if self.selected >= count {
             self.selected = count - 1;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::git::RepoInfo;
+
+    fn repo(name: &str, dirty: u32, ts: i64) -> RepoInfo {
+        RepoInfo {
+            path: PathBuf::from(name),
+            name: name.to_string(),
+            branch: "main".to_string(),
+            ahead: 0,
+            behind: 0,
+            dirty_count: dirty,
+            last_commit_age: "1d ago".to_string(),
+            last_commit_message: "msg".to_string(),
+            last_commit_timestamp: ts,
+            error: None,
+        }
+    }
+
+    fn app_with(repos: Vec<RepoInfo>) -> App {
+        App {
+            scan_dir: PathBuf::from("/dev/null"),
+            repo_paths: vec![],
+            repos,
+            selected: 0,
+            view: View::RepoList,
+            sort_mode: SortMode::Name,
+            filter_text: String::new(),
+            filter_input: String::new(),
+            filter_active: false,
+            fetching: false,
+            detail: None,
+            detail_tab: DetailTab::Commits,
+            detail_scroll: 0,
+            should_quit: false,
+        }
+    }
+
+    #[test]
+    fn next_tab_cycles_through_all_tabs() {
+        let mut app = app_with(vec![]);
+        assert_eq!(app.detail_tab, DetailTab::Commits);
+        app.next_tab();
+        assert_eq!(app.detail_tab, DetailTab::Changes);
+        app.next_tab();
+        assert_eq!(app.detail_tab, DetailTab::Branches);
+        app.next_tab();
+        assert_eq!(app.detail_tab, DetailTab::Stashes);
+        app.next_tab();
+        assert_eq!(app.detail_tab, DetailTab::Commits);
+    }
+
+    #[test]
+    fn next_tab_resets_scroll() {
+        let mut app = app_with(vec![]);
+        app.detail_scroll = 7;
+        app.next_tab();
+        assert_eq!(app.detail_scroll, 0);
+    }
+
+    #[test]
+    fn cycle_sort_rotates_modes() {
+        let mut app = app_with(vec![]);
+        assert_eq!(app.sort_mode, SortMode::Name);
+        app.cycle_sort();
+        assert_eq!(app.sort_mode, SortMode::LastCommit);
+        app.cycle_sort();
+        assert_eq!(app.sort_mode, SortMode::DirtyCount);
+        app.cycle_sort();
+        assert_eq!(app.sort_mode, SortMode::Name);
+    }
+
+    #[test]
+    fn filtered_repos_sorts_by_name_case_insensitively() {
+        let app = app_with(vec![repo("Zebra", 0, 1), repo("alpha", 0, 2)]);
+        let names: Vec<_> = app.filtered_repos().into_iter().map(|r| r.name).collect();
+        assert_eq!(names, vec!["alpha", "Zebra"]);
+    }
+
+    #[test]
+    fn filtered_repos_sorts_by_last_commit_desc() {
+        let mut app = app_with(vec![repo("old", 0, 100), repo("new", 0, 200)]);
+        app.sort_mode = SortMode::LastCommit;
+        let names: Vec<_> = app.filtered_repos().into_iter().map(|r| r.name).collect();
+        assert_eq!(names, vec!["new", "old"]);
+    }
+
+    #[test]
+    fn filtered_repos_sorts_by_dirty_count_desc() {
+        let mut app = app_with(vec![repo("clean", 0, 1), repo("messy", 9, 1)]);
+        app.sort_mode = SortMode::DirtyCount;
+        let names: Vec<_> = app.filtered_repos().into_iter().map(|r| r.name).collect();
+        assert_eq!(names, vec!["messy", "clean"]);
+    }
+
+    #[test]
+    fn filtered_repos_applies_substring_filter() {
+        let mut app = app_with(vec![repo("frontend", 0, 1), repo("backend", 0, 1)]);
+        app.filter_text = "END".to_string();
+        let names: Vec<_> = app.filtered_repos().into_iter().map(|r| r.name).collect();
+        assert_eq!(names, vec!["backend", "frontend"]);
+
+        app.filter_text = "front".to_string();
+        let names: Vec<_> = app.filtered_repos().into_iter().map(|r| r.name).collect();
+        assert_eq!(names, vec!["frontend"]);
+    }
+
+    #[test]
+    fn select_next_and_prev_stay_in_bounds() {
+        let mut app = app_with(vec![repo("a", 0, 1), repo("b", 0, 1)]);
+        app.select_prev();
+        assert_eq!(app.selected, 0); // can't go below 0
+        app.select_next();
+        assert_eq!(app.selected, 1);
+        app.select_next();
+        assert_eq!(app.selected, 1); // clamped at last index
+        app.select_prev();
+        assert_eq!(app.selected, 0);
+    }
+
+    #[test]
+    fn apply_filter_commits_input_and_resets_selection() {
+        let mut app = app_with(vec![repo("a", 0, 1), repo("b", 0, 1)]);
+        app.selected = 1;
+        app.start_filter();
+        app.filter_input = "a".to_string();
+        app.apply_filter();
+        assert_eq!(app.filter_text, "a");
+        assert!(!app.filter_active);
+        assert_eq!(app.selected, 0);
+    }
+
+    #[test]
+    fn cancel_filter_discards_input() {
+        let mut app = app_with(vec![]);
+        app.start_filter();
+        app.filter_input = "draft".to_string();
+        app.cancel_filter();
+        assert!(!app.filter_active);
+        assert!(app.filter_input.is_empty());
+        assert!(app.filter_text.is_empty());
+    }
+
+    #[test]
+    fn exit_detail_clears_detail_state() {
+        let mut app = app_with(vec![]);
+        app.view = View::RepoDetail(0);
+        app.detail_scroll = 5;
+        app.exit_detail();
+        assert!(matches!(app.view, View::RepoList));
+        assert!(app.detail.is_none());
+        assert_eq!(app.detail_scroll, 0);
     }
 }
