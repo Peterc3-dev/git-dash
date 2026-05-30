@@ -310,7 +310,7 @@ fn parse_branch_line(line: &str) -> BranchInfo {
     let name = trimmed.split_whitespace().next().unwrap_or("").to_string();
     let tracking = trimmed
         .find('[')
-        .and_then(|start| trimmed.find(']').map(|end| (start, end)))
+        .zip(trimmed.find(']'))
         .filter(|&(start, end)| start < end)
         .map(|(start, end)| trimmed[start + 1..end].to_string());
     BranchInfo {
